@@ -1,0 +1,6 @@
+[
+  { "unit_of_measure": "Each", "uom_code": "Ea" },
+  { "unit_of_measure": "EA", "uom_code": "EA" },
+  { "unit_of_measure": "Box", "uom_code": "Bx" },
+  { "unit_of_measure": "Case", "uom_code": "Cs" }
+]

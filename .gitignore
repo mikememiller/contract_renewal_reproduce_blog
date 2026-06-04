@@ -1,0 +1,32 @@
+# ──────────────────────────────────────────────────────────────────────────
+# Syntax Corporation © 2026 — EBS Contract Renewal PAF
+# ──────────────────────────────────────────────────────────────────────────
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Runtime output (generated interface files / traces / QA reports)
+output/
+*.log
+
+# Secrets — NEVER commit DB credentials
+conn.json
+.env
+
+# Node (slide generation tooling)
+node_modules/
+deliverables/node_modules/
+package-lock.json
+
+# OS
+.DS_Store

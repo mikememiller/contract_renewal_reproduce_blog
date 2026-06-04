@@ -1,0 +1,41 @@
+[
+  {
+    "vendor_id": 90042,
+    "vendor_num": "V-90042",
+    "vendor_name": "Acme Facilities Supply, Inc.",
+    "tax_id": "04-1112223",
+    "vendor_site_id": 78011,
+    "vendor_site_code": "BOSTON-MAIN",
+    "payment_method": "CHECK",
+    "purchasing_site_flag": "Y",
+    "site_inactive_date": null,
+    "terms_id": 10001,
+    "payment_terms": "45 Net (terms date + 45)"
+  },
+  {
+    "vendor_id": 1717,
+    "vendor_num": "8058",
+    "vendor_name": "HVAC Express",
+    "tax_id": "04-1234567",
+    "vendor_site_id": 4060,
+    "vendor_site_code": "MAIN",
+    "payment_method": "CHECK",
+    "purchasing_site_flag": "Y",
+    "site_inactive_date": null,
+    "terms_id": 10003,
+    "payment_terms": "45 Net (terms date + 45)"
+  },
+  {
+    "vendor_id": 90055,
+    "vendor_num": "V-90055",
+    "vendor_name": "Pinnacle Gaming Distribution, Inc.",
+    "tax_id": "04-5550001",
+    "vendor_site_id": 78055,
+    "vendor_site_code": "AUSTIN-DC",
+    "payment_method": "CHECK",
+    "purchasing_site_flag": "Y",
+    "site_inactive_date": null,
+    "terms_id": 10001,
+    "payment_terms": "45 Net (terms date + 45)"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "_comment": "Syntax Corporation (c) 2026 - EBS Contract Renewal PAF. Copy to conn.json and fill in. conn.json is gitignored. Password is best supplied via the EBS_PASSWORD env var or the interactive getpass prompt rather than this file.",
+  "host": "172.16.3.44",
+  "port": 1521,
+  "sid": "EBSDB",
+  "user": "APPS",
+  "password": null,
+  "org_id": 204,
+  "instant_client_dir": "~/lib/oracle/instantclient",
+  "backend": "live"
+}

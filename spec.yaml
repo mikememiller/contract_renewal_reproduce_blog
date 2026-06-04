@@ -1,0 +1,79 @@
+# =============================================================================
+#  Syntax Corporation © 2026 — EBS PAF Agent
+#  spec.yaml — the per-agent input for the EBS Contract Renewal PAF agent.
+#  Verified live against EBS_Vision_12214 (Phase 1) on 2026-06-04.
+# =============================================================================
+domain: "Contract (Blanket Purchase Agreement) renewal automation"
+package: ebs_contract_renewal_paf          # python package / repo name
+org_id: 204                                 # Vision Operations
+
+# --- EBS source reads (repository methods); confirmed LIVE in Phase 1 --------
+source:
+  - name: get_agreement
+    tables: [po_headers_all]
+  - name: get_agreement_lines
+    tables: [po_lines_all, po_line_locations_all, mtl_system_items_b, mtl_categories_b]
+  - name: get_supplier
+    tables: [ap_suppliers, ap_supplier_sites_all, ap_terms]
+  - name: resolve_uom_code
+    tables: [mtl_units_of_measure]
+  - name: check_renewal_exists          # idempotency: successor BPA already created?
+    tables: [po_headers_all]
+
+# --- target EBS Open Interface (PDOI / "Import Price Catalogs") --------------
+target_interface:
+  header_table: PO_HEADERS_INTERFACE
+  lines_table:  PO_LINES_INTERFACE
+  errors_table: PO_INTERFACE_ERRORS
+  import_program: "Import Price Catalogs"   # PDOI; ACTION=UPDATE against PO_HEADER_ID
+  write_via: standard_import                # standard_import | mcp_dml_tool (verify at install)
+  notes: >
+    DOCUMENT_NUM is an obsoleted online-patch stub (DOCUMENT_NUM#1) on this
+    instance; renewals reference the existing agreement by PO_HEADER_ID with
+    ACTION='UPDATE'. UOM_CODE for 'Each' is 'Ea' (not 'EA').
+
+extraction_schema: renewal_quote          # fields the LLM/parser must produce
+policy:
+  type: renewal_template
+  tolerances:
+    escalation_pct: 7.0       # contractual / CPI price-increase cap per line
+    escalation_floor: 250.00  # material annual $ impact floor (dual gate)
+    max_term_months: 36       # maximum renewal term length
+
+golden_record:
+  key: "BPA 4467"
+  header_id: 33467
+  notes: >
+    HVAC Express (vendor 1717 / num 8058), site MAIN (4060), USD, buyer
+    'Stock, Ms. Pat' (agent 25), terms 45-Net (10003). 5 ITEM lines
+    (filters/thermostats/fan bearing), current prices 16.89/30/30/350/135,
+    expired term 01-JAN-04 -> 31-DEC-10. Renewal proposes 2011-01-01 ->
+    2013-12-31; line 4 (heat-pump thermostat 350->385, +10%) HOLDs; header
+    blanket total = sum(new_price x est_qty) = 17,920.00.
+
+# --- PAF / MCP integration ---------------------------------------------------
+paf:
+  mcp: oci_managed
+  llm_model: "xai.grok-4"
+  plsql_schema: XXPAF
+
+# --- commercials (feed SOW + deck + ROI) ------------------------------------
+branding: { audience: exec, footer: "Syntax Corporation © 2026 · Confidential" }
+roi: { txns_per_year: 4000, value_per_year: 720000 }   # agreements renewed/yr
+pricing:
+  deployment: license_included
+  rate_card: { onshore: 175, nearshore: 85, offshore: 65 }
+  delivery_mix: { onshore: 0.2, nearshore: 0.4, offshore: 0.4 }
+  managed_services_terms: [12, 24, 36]
+  term_discount_pct: { 12: 0, 24: 10, 36: 20 }
+  run_hours_per_month: 40
+  agent_license_per_year: 35000
+oci_bom:
+  volume_tiers: [1000, 4000, 20000]
+  model: cohere_command_r
+  ocr: true
+  universal_credits_discount_pct: 20
+sow:
+  timeline_weeks: 8
+  legal_shell: generic
+  acceptance: "green live golden renewal test + balanced PDOI batch staged & validated in customer UAT"

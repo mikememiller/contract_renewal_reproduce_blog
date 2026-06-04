@@ -1,0 +1,116 @@
+[
+  {
+    "agreement_num": "BPA-90001",
+    "po_header_id": 990001,
+    "type_lookup_code": "BLANKET",
+    "authorization_status": "APPROVED",
+    "org_id": 204,
+    "vendor_id": 90042,
+    "vendor_site_id": 78011,
+    "currency_code": "USD",
+    "agent_id": 25,
+    "terms_id": 10001,
+    "start_date": "2023-01-01",
+    "end_date": "2025-12-31",
+    "blanket_total_amount": null,
+    "amount_limit": null,
+    "lines": [
+      {
+        "line_num": 1,
+        "po_line_id": 9900011,
+        "inventory_item_id": 700101,
+        "item_number": "FILTER-A",
+        "description": "Pleated Air Filter 24x16x1",
+        "uom": "Each",
+        "current_unit_price": 20.0,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "SUPPLIES.FACILITIES",
+        "item_active": "Y"
+      },
+      {
+        "line_num": 2,
+        "po_line_id": 9900012,
+        "inventory_item_id": 700102,
+        "item_number": "BELT-B",
+        "description": "HVAC Drive Belt B-Series",
+        "uom": "Each",
+        "current_unit_price": 50.0,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "SUPPLIES.FACILITIES",
+        "item_active": "Y"
+      },
+      {
+        "line_num": 3,
+        "po_line_id": 9900013,
+        "inventory_item_id": 700103,
+        "item_number": "PUMP-C",
+        "description": "Circulator Pump C-100",
+        "uom": "Each",
+        "current_unit_price": 500.0,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "SUPPLIES.FACILITIES",
+        "item_active": "Y"
+      }
+    ]
+  },
+  {
+    "agreement_num": "BPA-XP9000",
+    "po_header_id": 990055,
+    "type_lookup_code": "BLANKET",
+    "authorization_status": "APPROVED",
+    "org_id": 204,
+    "vendor_id": 90055,
+    "vendor_site_id": 78055,
+    "currency_code": "USD",
+    "agent_id": 25,
+    "terms_id": 10001,
+    "start_date": "2023-01-01",
+    "end_date": "2025-12-31",
+    "blanket_total_amount": null,
+    "amount_limit": null,
+    "lines": [
+      {
+        "line_num": 1,
+        "po_line_id": 9900551,
+        "inventory_item_id": 700551,
+        "item_number": "XP9000 Gamepak",
+        "description": "XP9000 Gamepak 1 - bundled game cartridge",
+        "uom": "Each",
+        "current_unit_price": 49.99,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "ELECTRONICS.CONSUMER",
+        "item_active": "Y"
+      },
+      {
+        "line_num": 2,
+        "po_line_id": 9900552,
+        "inventory_item_id": 700552,
+        "item_number": "XP9000 Controller",
+        "description": "XP9000 Wireless Controller",
+        "uom": "Each",
+        "current_unit_price": 24.99,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "ELECTRONICS.CONSUMER",
+        "item_active": "Y"
+      },
+      {
+        "line_num": 3,
+        "po_line_id": 9900553,
+        "inventory_item_id": 700553,
+        "item_number": "XP9000 Headset",
+        "description": "XP9000 Pro Gaming Headset",
+        "uom": "Each",
+        "current_unit_price": 79.99,
+        "line_type_id": 1,
+        "category_id": 37,
+        "category": "ELECTRONICS.CONSUMER",
+        "item_active": "Y"
+      }
+    ]
+  }
+]

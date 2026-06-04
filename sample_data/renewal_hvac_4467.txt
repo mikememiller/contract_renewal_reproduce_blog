@@ -1,0 +1,21 @@
+HVAC Express
+Blanket Purchase Agreement — Renewal Quote
+=====================================================================
+Quote Number:        HVX-RENEW-2026-4467
+Quote Date:          2025-12-01
+Existing Agreement:  4467
+Currency:            USD
+Federal Tax ID:      04-1234567
+Proposed Term Start: 2011-01-01
+Proposed Term End:   2013-12-31
+
+Proposed renewal pricing (estimated annual volumes):
+
+LINE | ITEM                  | EST_QTY | NEW_UNIT_PRICE
+1    | AC Filter             | 200     | 17.50
+2    | Thermostat - Cooling  | 40      | 31.50
+3    | Thermostat - Heating  | 40      | 31.50
+4    | Thermostat - Heat Pump| 20      | 385.00
+5    | Fan Bearing           | 30      | 140.00
+
+Notes: Line 4 (heat-pump thermostat) reflects a +10% supplier list increase.
