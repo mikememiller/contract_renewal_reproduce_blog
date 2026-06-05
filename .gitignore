@@ -9,6 +9,9 @@ __pycache__/
 .eggs/
 build/
 dist/
+# but DO keep the generated customer-facing deliverables
+!deliverables/dist/
+!deliverables/dist/**
 .venv/
 venv/
 .mypy_cache/

@@ -60,7 +60,24 @@ Purchase Agreement**, pull current prices from EBS via MCP, apply a deterministi
 | 10 | Cross-org leakage | every read org-scoped; APPS_INITIALIZE documented |
 | 11 | Duplicate/idempotency stub | real `check_renewal_exists` query (live-verified = 0 for golden) |
 | 12 | Python/PL-SQL drift | parity test live-verified |
-| 13 | Deliverables | see Phase 5 (visual QA in Phase 6) |
+| 13 | Deliverables | generated + structural QA PASS (see below) |
+
+## Deliverables (Phase 5) + convergence (Phase 6)
+All generated from the **one pricing model** (`deliverables/pricing.py`) so figures
+match across documents (verified: deck & SOW both cite $60,800 implementation and
+$5,880/mo 36-month). Structural QA **PASS**:
+- **Sales deck** `.pptx` — 9 slides, none empty, hero graphics embedded.
+- **Installation / Technical-Design / SOW** `.docx` — branded; tech-design + SOW
+  embed the **required architecture diagram**; SOW carries RACI, 12/24/36 pricing,
+  signature block.
+- **OCI BOM + estimator** `.xlsx` — 3 sheets (BOM, Estimator, Commercials).
+- **Interactive ROI calculator** `.html` — 6 live sliders, model injected.
+- **Hero graphics** — architecture, pipeline, ROI waterfall, TCO, BOM (all > 10 KB,
+  brand palette; architecture diagram visually reviewed — clean, no overflow).
+- **PAF integration package** — `deliverables/paf/canvas_recipe.md` +
+  `mcp_tool_defs.json`; `ebs/managed_mcp_tools.sql`.
+Convergence: two consecutive clean test rounds (43 hermetic + 8 live) with no new
+findings; structural QA of all artifacts PASS.
 
 ## Negative paths covered
 supplier-not-found · agreement-not-found · over-escalation HOLD · no-matching-line
@@ -86,3 +103,9 @@ idempotency block.
   existing agreement.
 - **LLM extractor** path requires `ANTHROPIC_API_KEY` (optional); the
   deterministic parser is the default and is fully tested.
+- **No LibreOffice/`soffice` in the build environment** → pixel-level render QA of
+  the `.pptx`/`.docx` was not performed; instead, **structural QA** (slide/shape/
+  paragraph/table/image counts, no empty slides, cross-document pricing
+  consistency) passed, and the matplotlib hero graphics were rendered to PNG and
+  visually reviewed. For a final render check, run
+  `soffice --headless --convert-to pdf deliverables/dist/*.pptx` in CI.

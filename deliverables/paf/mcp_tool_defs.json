@@ -1,0 +1,46 @@
+{
+  "_comment": "Syntax Corporation (c) 2026 - EBS Contract Renewal PAF - OCI managed-MCP tool definitions. Mirror of LiveEBSRepository + XXPAF_RENEWAL_PKG; register each in the OCI Database Tools console (SQL Report or PL/SQL custom tool). SQL bodies are in ebs/managed_mcp_tools.sql.",
+  "server": "ebs-contract-renewal",
+  "auth": "OAuth2 (IAM identity domain) or Personal Access Token",
+  "schemas": {
+    "renewal_quote": {
+      "vendor_name": "str", "vendor_tax_id": "str|null", "quote_number": "str",
+      "quote_date": "YYYY-MM-DD|null", "agreement_num": "str", "currency": "str",
+      "new_effective_date": "YYYY-MM-DD", "new_expiration_date": "YYYY-MM-DD",
+      "lines": [{"line_number": "int", "item_number": "str|null",
+                 "agreement_line_num": "int|null", "estimated_qty": "number",
+                 "new_unit_price": "number"}]
+    }
+  },
+  "tools": [
+    {"name": "get_agreement_header", "kind": "sql_report",
+     "params": ["agreement_num", "org_id"],
+     "desc": "Existing BLANKET agreement header (po_headers_all)."},
+    {"name": "get_agreement_lines", "kind": "sql_report",
+     "params": ["po_header_id", "org_id"],
+     "desc": "Current agreement price lines + item activity (po_lines_all, mtl_system_items_b)."},
+    {"name": "get_supplier_site", "kind": "sql_report",
+     "params": ["vendor_id", "org_id"],
+     "desc": "Supplier + purchasing site status (ap_suppliers, ap_supplier_sites_all)."},
+    {"name": "resolve_uom_code", "kind": "sql_report",
+     "params": ["unit_of_measure"],
+     "desc": "PDOI UOM_CODE for a UOM name (e.g. 'Each' -> 'Ea')."},
+    {"name": "check_renewal_exists", "kind": "plsql",
+     "impl": "XXPAF.XXPAF_RENEWAL_PKG.renewal_exists",
+     "params": ["vendor_id", "org_id", "new_effective_date"],
+     "returns": "Y|N", "desc": "Idempotency: successor BLANKET already created?"},
+    {"name": "evaluate_renewal_line", "kind": "plsql",
+     "impl": "XXPAF.XXPAF_RENEWAL_PKG.evaluate_line",
+     "params": ["current_price", "new_price", "estimated_qty"],
+     "returns": {"status": "AUTO|HOLD|ERROR", "escalation_pct": "number",
+                 "dollar_impact": "number", "reason": "str|null"},
+     "desc": "Per-line price-escalation verdict (dual 7% / $250 tolerance)."},
+    {"name": "evaluate_renewal_term", "kind": "plsql",
+     "impl": "XXPAF.XXPAF_RENEWAL_PKG.evaluate_term",
+     "params": ["new_effective", "new_expiration", "prior_expiration"],
+     "returns": "semicolon-delimited term exception codes ('' = clean)",
+     "desc": "Term contiguity + length assessment (<=36 months)."}
+  ],
+  "write_path": "OFF the MCP — load via standard 'Import Price Catalogs' (PDOI) or a governed XXPAF job. DML tool only if confirmed at install.",
+  "least_privilege_user": "XXPAF_MCP_RO: SELECT on the read objects + EXECUTE on XXPAF.XXPAF_RENEWAL_PKG; no DML grants."
+}

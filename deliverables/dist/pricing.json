@@ -1,0 +1,86 @@
+{
+  "currency": "USD",
+  "rate_card": {
+    "onshore": 175,
+    "nearshore": 85,
+    "offshore": 65
+  },
+  "delivery_mix": {
+    "onshore": 0.2,
+    "nearshore": 0.4,
+    "offshore": 0.4
+  },
+  "blended_rate": 95.0,
+  "implementation": {
+    "timeline_weeks": 8,
+    "hours": 640,
+    "blended_rate": 95.0,
+    "fixed_fee": 60800.0
+  },
+  "managed_services": {
+    "run_team_monthly": 3800.0,
+    "license_monthly": 2916.67,
+    "oci_monthly": 633.33,
+    "base_monthly": 7350.0,
+    "terms": {
+      "12": {
+        "monthly": 7350.0,
+        "annual": 88200.0,
+        "total_term": 88200.0,
+        "discount_pct": 0
+      },
+      "24": {
+        "monthly": 6615.0,
+        "annual": 79380.0,
+        "total_term": 158760.0,
+        "discount_pct": 10
+      },
+      "36": {
+        "monthly": 5880.0,
+        "annual": 70560.0,
+        "total_term": 211680.0,
+        "discount_pct": 20
+      }
+    }
+  },
+  "oci_bom": {
+    "tiers": [
+      {
+        "volume_per_year": 1000,
+        "license_included_monthly": 608.33,
+        "license_included_annual": 7300.0,
+        "byol_monthly": 176.33,
+        "byol_annual": 2116.0
+      },
+      {
+        "volume_per_year": 4000,
+        "license_included_monthly": 633.33,
+        "license_included_annual": 7600.0,
+        "byol_monthly": 201.33,
+        "byol_annual": 2416.0
+      },
+      {
+        "volume_per_year": 20000,
+        "license_included_monthly": 766.67,
+        "license_included_annual": 9200.0,
+        "byol_monthly": 334.67,
+        "byol_annual": 4016.0
+      }
+    ]
+  },
+  "roi": {
+    "annual_volume": 4000,
+    "current_cost_per_txn": 180.0,
+    "automated_cost_per_txn": 12.0,
+    "assisted_cost_per_txn": 70.0,
+    "target_stp_pct": 75,
+    "current_annual_cost": 720000.0,
+    "future_annual_cost": 106000.0,
+    "annual_savings": 614000.0,
+    "annual_run_cost": 88200.0,
+    "year1_total_cost": 149000.0,
+    "payback_months": 1.4,
+    "three_year_net_savings": 1516600.0,
+    "three_year_roi_pct": 466.1
+  }
+}

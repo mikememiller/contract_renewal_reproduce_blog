@@ -1,0 +1,20 @@
+{
+  "_comment": "Syntax Corporation (c) 2026 — single brand source for all EBS PAF Agent deliverable generators.",
+  "company": "Syntax Corporation",
+  "footer": "Syntax Corporation © 2026 · Confidential",
+  "palette": {
+    "navy": "0632A0",
+    "navy_dark": "041F66",
+    "green": "3CC85A",
+    "cyan": "1EB4E6",
+    "gold": "F1D488",
+    "ink": "16203A",
+    "slate": "5B6577",
+    "paper": "FFFFFF",
+    "mist": "F4F7FC",
+    "line": "DCE4F4"
+  },
+  "fonts": { "header": "Georgia", "body": "Calibri" },
+  "logo": { "path": "assets/syntax-logo.png", "aspect": 0.528 },
+  "motif": "tri-color triangle (navy/cyan/green)"
+}
