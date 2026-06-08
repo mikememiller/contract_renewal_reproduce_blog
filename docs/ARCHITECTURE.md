@@ -15,7 +15,8 @@ deterministic policy → EBS Open Interface**, with a QA gate + branded delivera
 | `interface_writer.py` | builds the **balanced** PDOI batch (header `AMOUNT_AGREED` = Σ line price×qty) |
 | `qa_checks.py` | pre-load validation gate → `PASS/HOLD/FAIL` + `loadable` |
 | `interface_loader.py` | optional, gated, batch-cleanable INSERT into PDOI (off by default) |
-| `renewal_agent.py` | orchestrator; `process()` + `process_extracted()` (PAF split) |
+| `renewal_agent.py` | orchestrator; `process()` + `process_extracted()` (PAF split); blog/upcharge + quote modes; emits the change log |
+| `contract_writer.py` | optional renewal contract `.docx` (blog Step 3a; needs python-docx) |
 | `mcp_ebs_server.py` | local/stdio reference MCP (production uses the managed MCP) |
 | `cli.py` | `python -m ebs_contract_renewal_paf` entry point |
 

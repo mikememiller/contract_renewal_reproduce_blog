@@ -52,6 +52,10 @@ class EBSRepository(Protocol):
         self, vendor_id: int, new_effective_date: str
     ) -> bool: ...
 
+    def get_latest_item_price(
+        self, inventory_item_id: int
+    ) -> dict[str, Any] | None: ...
+
 
 # ===========================================================================
 # Mock implementation — JSON fixtures (offline / hermetic tests)
@@ -106,6 +110,16 @@ class MockEBSRepository:
 
     def check_renewal_exists(self, vendor_id, new_effective_date):
         return False  # the mock master has no successor agreements
+
+    def get_latest_item_price(self, inventory_item_id):
+        for ag in self._load("mock_agreement_master.json"):
+            for ln in ag.get("lines", []):
+                if ln.get("inventory_item_id") == inventory_item_id:
+                    price = ln.get("latest_price", ln.get("current_unit_price"))
+                    return {"latest_price": price,
+                            "source_po": ag.get("agreement_num"),
+                            "source_date": ag.get("end_date")}
+        return None
 
 
 # ===========================================================================
@@ -280,3 +294,31 @@ class LiveEBSRepository:
             {"vendor_id": vendor_id, "org_id": self.org_id, "eff": eff},
         )
         return bool(row and row["n"] > 0)
+
+    # ------------------------------------------------------------------
+    def get_latest_item_price(self, inventory_item_id):
+        """Latest unit price for an item from EBS — the most recent priced PO
+        line for the item in this org. This is the blog's 'pull latest unit
+        prices from the EBS database' step (current market reality vs the stale
+        agreement price). Verified live: e.g. item 11063 'AC Filter' latest
+        $12.56 (PO 6204) vs $16.89 on agreement 4467.
+        """
+        # ROWNUM applied AFTER the ORDER BY via an inline view (gotcha #1).
+        row = self.conn.query_one(
+            """
+            SELECT * FROM (
+              SELECT pl.unit_price        AS latest_price,
+                     ph.segment1          AS source_po,
+                     ph.creation_date     AS source_date
+                FROM apps.po_lines_all pl
+                JOIN apps.po_headers_all ph
+                     ON ph.po_header_id = pl.po_header_id
+                    AND ph.org_id = :org_id
+               WHERE pl.item_id = :item_id
+                 AND pl.unit_price IS NOT NULL
+               ORDER BY ph.creation_date DESC, pl.po_line_id DESC
+            ) WHERE ROWNUM = 1
+            """,
+            {"item_id": inventory_item_id, "org_id": self.org_id},
+        )
+        return row

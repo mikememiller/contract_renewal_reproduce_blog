@@ -63,6 +63,19 @@ SELECT * FROM (
 SELECT uom_code FROM apps.mtl_units_of_measure
  WHERE UPPER(unit_of_measure) = UPPER(:unit_of_measure);
 
+-- Tool: get_latest_item_price  (params: :item_id, :org_id)
+-- The blog's "pull latest unit prices from the EBS database" step: the most
+-- recent priced PO line for the item (current market reality vs the agreement).
+SELECT * FROM (
+  SELECT pl.unit_price AS latest_price, ph.segment1 AS source_po,
+         ph.creation_date AS source_date
+    FROM apps.po_lines_all pl
+    JOIN apps.po_headers_all ph
+         ON ph.po_header_id = pl.po_header_id AND ph.org_id = :org_id
+   WHERE pl.item_id = :item_id AND pl.unit_price IS NOT NULL
+   ORDER BY ph.creation_date DESC, pl.po_line_id DESC
+) WHERE ROWNUM = 1;
+
 -- ============================ CUSTOM PL/SQL TOOLS ==========================
 -- Tool: check_renewal_exists  -> XXPAF.XXPAF_RENEWAL_PKG.renewal_exists
 --   returns 'Y'/'N' for (:vendor_id, :org_id, :new_effective_date)

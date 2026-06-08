@@ -19,12 +19,25 @@ This agent reads the existing agreement from EBS, validates the supplier's
 proposed prices and term against deterministic policy, and stages a clean PDOI
 batch — leaving the **buyer to approve** the renewed agreement in EBS.
 
+## Two input modes
+- **Blog mode (upcharge)** — the supplier states no prices. Give the agreement #,
+  new term, and an `Upcharge: N%`; the agent **pulls the latest unit price for
+  each item from EBS** and applies the upcharge (the blog's Step 2). Run:
+  `ebs-renewal-paf sample_data/renewal_request_hvac_4467.txt --backend live --contract`.
+- **Quote mode** — the supplier provides explicit new prices in the line table;
+  the agent validates them against the current agreement price.
+
+Both produce the same outputs: the PDOI CSV batch, an explainability
+**`CHANGE_LOG.csv`** (old vs latest-EBS vs new price + Δ + effective date), and —
+with `--contract` — the updated **renewal contract `.docx`** (the blog's Step 3a).
+
 ## What it does (pipeline)
-1. **Extract** the renewal quote (supplier, agreement #, new term, per-line new
-   prices + estimated annual quantities). Deterministic parser by default; an
-   optional LLM extractor for messy quotes.
+1. **Extract** the renewal quote/request (supplier, agreement #, new term, an
+   upcharge and/or per-line new prices + estimated annual quantities).
+   Deterministic parser by default; an optional LLM extractor for messy quotes.
 2. **Govern the EBS reads** (read-only, bind-variable, org-scoped): existing
-   BLANKET agreement + current line prices, supplier site, UOM code, idempotency.
+   BLANKET agreement + current line prices, **latest unit price per item**,
+   supplier site, UOM code, idempotency.
 3. **Apply deterministic policy** (outside the LLM, auditable):
    - **Price-escalation dual tolerance** — HOLD a line only when the increase
      breaches **both** a % cap (7%) **and** a material annual-$ floor ($250).

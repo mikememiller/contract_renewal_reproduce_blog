@@ -45,6 +45,47 @@ def test_end_to_end_acme_mock(mock_repo, acme_quote_text):
     assert not rpt.errors
 
 
+def test_blog_mode_upcharge_and_change_log(mock_repo):
+    # blog flow: no supplier prices — derive from latest EBS price x upcharge
+    from pathlib import Path
+    text = (Path(__file__).resolve().parents[1] / "sample_data"
+            / "renewal_request_acme.txt").read_text()
+    agent = RenewalAgent(mock_repo, DeterministicExtractor(), org_id=204)
+    trace = agent.process(text)
+    # BELT-B: latest 55.0 x 1.06 = 58.30 vs agreement 50.0 = +16.6% -> HOLD
+    belt = next(c for c in trace.change_log if c["item_number"] == "BELT-B")
+    assert belt["old_unit_price"] == 50.0
+    assert belt["latest_ebs_price"] == 55.0
+    assert belt["new_unit_price"] == 58.3
+    assert belt["status"] == "HOLD"
+    # FILTER-A: latest 19.0 (below agreement) x 1.06 = 20.14 -> small change AUTO
+    filt = next(c for c in trace.change_log if c["item_number"] == "FILTER-A")
+    assert filt["latest_ebs_price"] == 19.0 and filt["status"] == "AUTO"
+    assert len(trace.change_log) == 3
+    assert not trace.auto_approved
+    assert agent.qa_reports[0].status == "HOLD"
+    # balances: header = sum(new_price x qty)
+    hdr = agent.writer.headers[0]
+    line_sum = sum(Decimal(l["UNIT_PRICE"]) * Decimal(str(l["QUANTITY"]))
+                   for l in agent.writer.lines)
+    assert Decimal(hdr["AMOUNT_AGREED"]) == line_sum
+
+
+def test_contract_document_generated(mock_repo, tmp_path):
+    from pathlib import Path
+    from ebs_contract_renewal_paf.contract_writer import build_contract
+    text = (Path(__file__).resolve().parents[1] / "sample_data"
+            / "renewal_request_acme.txt").read_text()
+    agent = RenewalAgent(mock_repo, DeterministicExtractor(), org_id=204)
+    trace = agent.process(text)
+    path = build_contract(trace.to_dict(), tmp_path)
+    assert path.exists() and path.suffix == ".docx"
+    from docx import Document
+    doc = Document(path)
+    alltext = " ".join(p.text for p in doc.paragraphs)
+    assert "RENEWAL" in alltext and "Governing law" in alltext
+
+
 def test_process_extracted_matches_full_process(mock_repo, acme_quote_text):
     ex = DeterministicExtractor()
     extracted = ex.extract(acme_quote_text)

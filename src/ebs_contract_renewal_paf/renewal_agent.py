@@ -41,6 +41,7 @@ class AgentTrace:
     agreement_match: dict[str, Any] | None = None
     term: dict[str, Any] | None = None
     line_results: list[dict[str, Any]] = field(default_factory=list)
+    change_log: list[dict[str, Any]] = field(default_factory=list)
     idempotency_block: bool = False
     auto_approved: bool = False
     exceptions: list[str] = field(default_factory=list)
@@ -58,6 +59,7 @@ class AgentTrace:
                                 if self.agreement_match else None),
             "term": _jsonable(self.term) if self.term else None,
             "line_results": self.line_results,
+            "change_log": self.change_log,
             "idempotency_block": self.idempotency_block,
             "auto_approved": self.auto_approved,
             "exceptions": self.exceptions,
@@ -130,11 +132,64 @@ class RenewalAgent:
                 trace.exceptions.append("RENEWAL_ALREADY_EXISTS")
                 return trace
 
+        # Prepare the working line set. In 'upcharge' (blog) mode the supplier
+        # does not state new prices; the agent pulls the LATEST unit price from
+        # EBS and applies the upcharge. If no line table was supplied at all,
+        # enumerate the agreement's own lines.
+        upcharge = extracted.get("upcharge_pct")
+        work_lines = list(extracted.get("lines") or [])
+        if not work_lines and upcharge is not None:
+            work_lines = [{"line_number": al["line_num"],
+                           "item_number": al.get("item_number"),
+                           "agreement_line_num": al["line_num"],
+                           "estimated_qty": 1.0, "new_unit_price": None}
+                          for al in agreement["lines"]]
+
+        change_log: list[dict[str, Any]] = []
+
         # line-by-line escalation + coding
         coded_lines: list[dict[str, Any]] = []
         all_auto = True
-        for line in extracted["lines"]:
+        for line in work_lines:
+            ag_match = next((l for l in agreement["lines"]
+                             if l["line_num"] == line.get("agreement_line_num")),
+                            None)
+            if ag_match is None:
+                ag_match = next((l for l in agreement["lines"]
+                                 if l.get("item_number") == line.get("item_number")),
+                                None)
+            latest_price = None; latest_src = None
+            # derive new price from latest EBS price + upcharge when not stated
+            if line.get("new_unit_price") is None and ag_match is not None:
+                lp = None
+                try:
+                    lp = self.repo.get_latest_item_price(
+                        ag_match.get("inventory_item_id"))
+                except Exception:
+                    lp = None
+                base = (Decimal(str(lp["latest_price"])) if lp
+                        else Decimal(str(ag_match["current_unit_price"])))
+                latest_price = float(base)
+                latest_src = lp.get("source_po") if lp else "agreement"
+                factor = Decimal("1") + (Decimal(str(upcharge or 0)) / 100)
+                line["new_unit_price"] = float(
+                    (base * factor).quantize(Decimal("0.01")))
+
             res = evaluate_renewal_line(line, agreement)
+            if ag_match is not None:
+                change_log.append({
+                    "line_number": line["line_number"],
+                    "item_number": ag_match.get("item_number"),
+                    "old_unit_price": float(ag_match["current_unit_price"]),
+                    "latest_ebs_price": latest_price,
+                    "new_unit_price": line["new_unit_price"],
+                    "delta_pct": _s(res.escalation_pct),
+                    "delta_abs": (round(line["new_unit_price"]
+                                        - float(ag_match["current_unit_price"]), 2)),
+                    "effective_date": (term.get("new_effective_date").strftime("%Y-%m-%d")
+                                       if term.get("new_effective_date") else None),
+                    "status": "AUTO" if res.auto_approve else "HOLD",
+                })
             trace.line_results.append({
                 "line_number": res.line_number,
                 "matched": res.matched,
@@ -148,14 +203,7 @@ class RenewalAgent:
             if not res.auto_approve:
                 all_auto = False
 
-            ag_line = next((l for l in agreement["lines"]
-                            if l["line_num"] == line.get("agreement_line_num")),
-                           None)
-            if ag_line is None:
-                ag_line = next((l for l in agreement["lines"]
-                                if l.get("item_number") == line.get("item_number")),
-                               {})
-
+            ag_line = ag_match or {}
             uom = ag_line.get("uom") or "Each"
             coded_lines.append({
                 "line_number": res.line_number,
@@ -177,6 +225,7 @@ class RenewalAgent:
                 "exceptions": res.exceptions,
             })
 
+        trace.change_log = change_log
         trace.auto_approved = all_auto and not term.get("exceptions")
         trace.confidence = self._confidence(extracted, coded_lines, term)
 

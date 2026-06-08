@@ -1,0 +1,15 @@
+Acme Facilities Supply, Inc.
+Blanket Purchase Agreement — Renewal Request (blog mode)
+=====================================================================
+Existing Agreement:  BPA-90001
+Currency:            USD
+Proposed Term Start: 2026-01-01
+Proposed Term End:   2028-12-31
+Upcharge:            6%
+
+Estimated annual quantities:
+
+LINE | ITEM     | EST_QTY
+1    | FILTER-A | 100
+2    | BELT-B   | 80
+3    | PUMP-C   | 10

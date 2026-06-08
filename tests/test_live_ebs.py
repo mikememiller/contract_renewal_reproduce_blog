@@ -68,6 +68,37 @@ def test_check_renewal_exists_false_for_golden(live_repo):
 
 
 @requires_live
+def test_get_latest_item_price(live_repo):
+    # verified Phase-1: AC Filter (11063) latest $12.56 vs $16.89 on agreement
+    lp = live_repo.get_latest_item_price(11063)
+    assert lp is not None
+    assert float(lp["latest_price"]) == 12.56
+
+
+@requires_live
+def test_blog_mode_upcharge_live_4467(live_conn, live_repo, live_settings):
+    """Blog flow against the real DB: no supplier prices — pull latest EBS price,
+    apply an 8% upcharge, gate vs the existing agreement."""
+    from pathlib import Path
+    from ebs_contract_renewal_paf.extractor import DeterministicExtractor
+    from ebs_contract_renewal_paf.renewal_agent import RenewalAgent
+    text = (Path(__file__).resolve().parents[1] / "sample_data"
+            / "renewal_request_hvac_4467.txt").read_text()
+    agent = RenewalAgent(live_repo, DeterministicExtractor(),
+                         org_id=live_settings.org_id, qa_conn=live_conn)
+    trace = agent.process(text)
+    assert len(trace.change_log) == 5
+    # AC Filter latest 12.56 -> below the $16.89 agreement price even after +8%
+    acf = next(c for c in trace.change_log if c["item_number"] == "AC Filter")
+    assert acf["latest_ebs_price"] == 12.56
+    assert acf["new_unit_price"] < acf["old_unit_price"]   # decrease vs contract
+    # heat-pump thermostat: 350 x 1.08 = 378 -> +8% on a big line -> HOLD
+    hp = next(c for c in trace.change_log if "Heat Pump" in (c["item_number"] or ""))
+    assert hp["status"] == "HOLD"
+    assert agent.qa_reports[0].status == "HOLD"
+
+
+@requires_live
 def test_end_to_end_live_4467(live_conn, live_repo, hvac_quote_text,
                               live_settings):
     from ebs_contract_renewal_paf.extractor import DeterministicExtractor

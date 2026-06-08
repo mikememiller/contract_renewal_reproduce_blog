@@ -1,0 +1,22 @@
+HVAC Express
+Blanket Purchase Agreement — Renewal Request (blog mode)
+=====================================================================
+Existing Agreement:  4467
+Currency:            USD
+Proposed Term Start: 2011-01-01
+Proposed Term End:   2013-12-31
+Upcharge:            8%
+
+This is the blog's flow: no supplier price list is provided. The agent pulls the
+LATEST unit price for each item from the EBS database and applies the agreed
+upcharge to derive the new-term price; the approval gate then flags any line whose
+change vs the existing agreement exceeds policy.
+
+Estimated annual quantities:
+
+LINE | ITEM                  | EST_QTY
+1    | AC Filter             | 200
+2    | Thermostat - Cooling  | 40
+3    | Thermostat - Heating  | 40
+4    | Thermostat - Heat Pump| 20
+5    | Fan Bearing           | 30

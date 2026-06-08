@@ -95,12 +95,15 @@ class DeterministicExtractor:
             r"(?:Proposed\s+)?(?:Term\s+|Expiration\s+|Renewal\s+)"
             r"(?:End|Expiration|To|Through)\s*(?:Date)?\s*:?\s*"
             r"([0-9]{4}-[0-9]{2}-[0-9]{2})",
+        # Blog mode: a single upcharge % applied to the latest EBS price.
+        "upcharge_pct": r"Upcharge\s*:?\s*([\d.]+)\s*%",
     }
 
-    # A pipe-delimited row: <line_no> | <item...> | <qty> | <unit_price>
-    _LINE_RE = re.compile(
-        r"^\s*(\d+)\s*\|\s*(.+?)\s*\|\s*([\d,]+(?:\.\d+)?)\s*\|\s*\$?([\d,]+(?:\.\d+)?)\s*$"
-    )
+    # A pipe-delimited data row starts with a line number then 1-3 more fields:
+    #   N | ITEM | EST_QTY | NEW_UNIT_PRICE   (quote mode — explicit price)
+    #   N | ITEM | EST_QTY                    (blog mode — price derived)
+    #   N | EST_QTY                           (blog mode — item from EBS)
+    _ROW_RE = re.compile(r"^\s*\d+\s*\|")
 
     def extract(self, quote_text: str) -> dict[str, Any]:
         text = quote_text
@@ -114,40 +117,61 @@ class DeterministicExtractor:
             raise ExtractionError(
                 "Could not find the existing agreement number "
                 "(expected a line like 'Existing Agreement: 4467').")
-        if not result.get("quote_number"):
-            raise ExtractionError("Could not find a quote number.")
+        # quote_number is optional — blog-mode renewal requests have none; the
+        # PDOI VENDOR_DOC_NUM is simply left blank in that case.
 
         result["currency"] = result.get("currency") or "USD"
         result["vendor_name"] = self._vendor_name(text)
+        upcharge = (float(result["upcharge_pct"])
+                    if result.get("upcharge_pct") else None)
+        result["upcharge_pct"] = upcharge
 
-        # line items
+        # line items — variable column count (quote vs blog mode)
         lines: list[dict[str, Any]] = []
         for raw in text.splitlines():
-            lm = self._LINE_RE.match(raw)
-            if not lm:
+            if not self._ROW_RE.match(raw):
                 continue
-            line_no = int(lm.group(1))
-            item = lm.group(2).strip()
-            qty = _number(lm.group(3))
-            new_price = _money(lm.group(4))
+            parts = [p.strip() for p in raw.split("|")]
+            line_no = int(parts[0])
+            item = None
+            new_price: float | None = None
+            try:
+                if len(parts) >= 4:          # N | ITEM | QTY | PRICE
+                    item = parts[1] or None
+                    qty = _number(parts[2]); new_price = float(_money(parts[3]))
+                elif len(parts) == 3:        # N | ITEM | QTY
+                    item = parts[1] or None
+                    qty = _number(parts[2])
+                elif len(parts) == 2:        # N | QTY
+                    qty = _number(parts[1])
+                else:
+                    continue
+            except ExtractionError:
+                continue
             lines.append({
                 "line_number": line_no,
                 "item_number": item,
-                # convention: quote line N ↔ agreement line N
-                "agreement_line_num": line_no,
+                "agreement_line_num": line_no,   # quote line N ↔ agreement line N
                 "estimated_qty": float(qty),
-                "new_unit_price": float(new_price),
+                "new_unit_price": new_price,     # None → derive from EBS + upcharge
             })
-        if not lines:
-            raise ExtractionError(
-                "No renewal line items could be parsed (expected pipe-delimited "
-                "rows: 'LINE | ITEM | EST_QTY | NEW_UNIT_PRICE').")
-        result["lines"] = lines
 
-        # informational rollup of the proposed annual value
+        # Blog mode allows NO line table (the agent enumerates the agreement's
+        # lines from EBS); only error when there is also no upcharge to apply.
+        if not lines and upcharge is None:
+            raise ExtractionError(
+                "No renewal line items and no upcharge found. Provide either "
+                "pipe-delimited 'LINE | ITEM | EST_QTY | NEW_UNIT_PRICE' rows "
+                "(quote mode) or an 'Upcharge: N%' (blog mode).")
+        result["lines"] = lines
+        result["mode"] = ("quote" if any(l["new_unit_price"] is not None
+                                          for l in lines) else "upcharge")
+
+        # informational rollup (only meaningful when prices are explicit)
+        priced = [l for l in lines if l["new_unit_price"] is not None]
         result["proposed_total"] = float(
             sum((Decimal(str(l["new_unit_price"])) * Decimal(str(l["estimated_qty"]))
-                 for l in lines), Decimal("0")))
+                 for l in priced), Decimal("0"))) if priced else None
         return result
 
     @staticmethod

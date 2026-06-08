@@ -79,6 +79,34 @@ def test_title_line_not_misread_as_agreement():
     assert out["agreement_num"] == "4467"
 
 
+def test_blog_mode_upcharge_priceless_lines():
+    text = (
+        "HVAC Express\n"
+        "Existing Agreement: 4467\n"
+        "Currency: USD\n"
+        "Proposed Term Start: 2011-01-01\n"
+        "Proposed Term End: 2013-12-31\n"
+        "Upcharge: 8%\n"
+        "LINE | ITEM | EST_QTY\n"
+        "1 | AC Filter | 200\n"
+        "2 | Fan Bearing | 30\n"
+    )
+    out = DeterministicExtractor().extract(text)
+    assert out["upcharge_pct"] == 8.0
+    assert out["mode"] == "upcharge"
+    assert out["quote_number"] is None          # optional in blog mode
+    assert out["proposed_total"] is None         # prices derived later
+    assert out["lines"][0]["new_unit_price"] is None
+    assert out["lines"][0]["estimated_qty"] == 200
+
+
+def test_no_lines_and_no_upcharge_raises():
+    text = ("X\nExisting Agreement: 4467\nProposed Term Start: 2026-01-01\n"
+            "Proposed Term End: 2026-12-31\n")
+    with pytest.raises(ExtractionError):
+        DeterministicExtractor().extract(text)
+
+
 def test_factory_default_is_deterministic():
     assert isinstance(make_extractor("deterministic"), DeterministicExtractor)
 

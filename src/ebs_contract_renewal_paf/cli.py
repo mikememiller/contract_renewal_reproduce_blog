@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import sys
 from pathlib import Path
@@ -47,6 +48,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
                    help="INSERT loadable renewals into the PDOI interface tables")
     p.add_argument("--yes", action="store_true",
                    help="confirm the --load-to-ebs write")
+    p.add_argument("--contract", action="store_true",
+                   help="also generate the renewal contract .docx (needs python-docx)")
     return p.parse_args(argv)
 
 
@@ -84,8 +87,17 @@ def main(argv: list[str] | None = None) -> int:
         (out_dir / "qa_report.json").write_text(
             json.dumps([r.to_dict() for r in agent.qa_reports], indent=2))
 
+        # explainability change log (old vs new unit price + effective date)
+        cl_path = out_dir / "CHANGE_LOG.csv"
+        if trace.change_log:
+            with open(cl_path, "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=list(trace.change_log[0].keys()))
+                w.writeheader(); w.writerows(trace.change_log)
+
         _print_summary(trace, hdr_csv, lines_csv, out_dir)
 
+        if args.contract:
+            _do_contract(trace, out_dir)
         if args.load_to_ebs:
             _do_load(live_conn, agent, args.yes)
 
@@ -94,6 +106,17 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if live_conn is not None:
             live_conn.__exit__(None, None, None)
+
+
+def _do_contract(trace, out_dir) -> None:
+    try:
+        from .contract_writer import build_contract
+        assets = Path(__file__).resolve().parents[2] / "deliverables" / "assets"
+        path = build_contract(trace.to_dict(), out_dir,
+                              assets_dir=assets if assets.exists() else None)
+        print(f"  Renewal contract: {path}")
+    except Exception as exc:
+        print(f"  (contract doc skipped: {exc})")
 
 
 def _do_load(live_conn, agent, confirmed: bool) -> None:

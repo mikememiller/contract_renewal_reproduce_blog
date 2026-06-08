@@ -13,13 +13,24 @@ Purchase Agreement**, pull current prices from EBS via MCP, apply a deterministi
 ## Test results
 | Suite | Command | Result |
 |-------|---------|--------|
-| Hermetic | `pytest -m "not live"` | **43 passed** |
-| Live (EBS Vision) | `EBS_RUN_LIVE=1 EBS_PASSWORD=… pytest -m live` | **8 passed** |
+| Hermetic | `pytest -m "not live"` | **47 passed** |
+| Live (EBS Vision) | `EBS_RUN_LIVE=1 EBS_PASSWORD=… pytest -m live` | **10 passed** |
 | Compile | `py_compile` all modules | OK |
 | File-header banner | all `.py` / `.sql` | present |
 | Python↔PL/SQL parity | live, via MCP | **PASS** (identical verdicts) |
 
-51 tests total, all green.
+57 tests total, all green.
+
+## Blog fidelity (reproduces the three demoed steps)
+1. **Latest price from EBS + upcharge** (`get_latest_item_price`, verified live —
+   e.g. AC Filter latest $12.56 vs $16.89 on agreement 4467) → new-term price =
+   latest × (1 + upcharge%). Two input modes: **blog/upcharge** and **quote**.
+2. **EBS CSV** for `PO_HEADERS_INTERFACE` / `PO_LINES_INTERFACE` (PDOI).
+3. **Renewal contract document** (`--contract` → `RENEWAL_CONTRACT_*.docx`) with
+   template legal language (governing law, warranty) + revised pricing table.
+Plus both of the blog's "next steps": the **per-line price-threshold approval
+gate** (7% AND $250 dual tolerance) and the **explainability change log**
+(`CHANGE_LOG.csv`: old vs latest-EBS vs new price + Δ + effective date).
 
 ## Live verification performed (against the real DB)
 1. **Every read query** run live with the golden record (supplier, agreement +
